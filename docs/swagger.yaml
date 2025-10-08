@@ -1,0 +1,75 @@
+basePath: /
+host: deonna-maximal-kyleigh.ngrok-free.dev
+info:
+  contact: {}
+  description: Upload employee reports, generate summaries, and see grades.
+  title: Employee Summary & Grading API
+  version: "1.0"
+paths:
+  /generate:
+    post:
+      description: Manually generate summaries and grades for all uploads
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Generate summaries
+  /summaries:
+    get:
+      description: Returns all employees with summaries and grades
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Get all summaries
+  /summaries/{employee}:
+    get:
+      description: Get summary and grade for a specific employee
+      parameters:
+      - description: Employee name
+        in: path
+        name: employee
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Get employee summary
+  /upload:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Upload an employee's report file
+      parameters:
+      - description: Employee name
+        in: formData
+        name: employee
+        required: true
+        type: string
+      - description: Report file
+        in: formData
+        name: summary
+        required: true
+        type: file
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: File uploaded
+          schema:
+            type: string
+      summary: Upload a report
+swagger: "2.0"

@@ -1,24 +1,34 @@
 package main
 
 import (
-    "gopkg.in/gomail.v2"
-    "os"
+	"fmt"
+	"net/smtp"
+	"os"
 )
 
 func SendEmail(summary string) {
-    from := os.Getenv("EMAIL_FROM")
-    to := os.Getenv("EMAIL_TO")
-    password := os.Getenv("EMAIL_PASSWORD")
+	from := os.Getenv("EMAIL_FROM")
+	pass := os.Getenv("EMAIL_PASSWORD")
+	to := os.Getenv("EMAIL_TO")
 
-    m := gomail.NewMessage()
-    m.SetHeader("From", from)
-    m.SetHeader("To", to)
-    m.SetHeader("Subject", "Weekly Work Summary")
-    m.SetBody("text/plain", summary)
+	if from == "" || pass == "" || to == "" {
+		fmt.Println("Missing email environment variables")
+		return
+	}
 
-    d := gomail.NewDialer("smtp.gmail.com", 587, from, password)
+	msg := "Subject: Weekly Summary Report\n\n" + summary
 
-    if err := d.DialAndSend(m); err != nil {
-        panic(err)
-    }
+	err := smtp.SendMail(
+		"smtp.gmail.com:587",
+		smtp.PlainAuth("", from, pass, "smtp.gmail.com"),
+		from,
+		[]string{to},
+		[]byte(msg),
+	)
+	if err != nil {
+		fmt.Println("Failed to send email:", err)
+		return
+	}
+
+	fmt.Println("Email sent to", to)
 }

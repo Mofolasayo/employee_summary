@@ -1,0 +1,112 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "Upload employee reports, generate summaries, and see grades.",
+        "title": "Employee Summary \u0026 Grading API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "deonna-maximal-kyleigh.ngrok-free.dev",
+    "basePath": "/",
+    "paths": {
+        "/generate": {
+            "post": {
+                "description": "Manually generate summaries and grades for all uploads",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Generate summaries",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/summaries": {
+            "get": {
+                "description": "Returns all employees with summaries and grades",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Get all summaries",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/summaries/{employee}": {
+            "get": {
+                "description": "Get summary and grade for a specific employee",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Get employee summary",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Employee name",
+                        "name": "employee",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/upload": {
+            "post": {
+                "description": "Upload an employee's report file",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "text/plain"
+                ],
+                "summary": "Upload a report",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Employee name",
+                        "name": "employee",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "Report file",
+                        "name": "summary",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "File uploaded",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
