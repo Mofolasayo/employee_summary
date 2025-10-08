@@ -40,25 +40,18 @@ func uploadHandler(c *gin.Context) {
 	SaveSubmission(employee, filePath)
 
 	go func() {
-		files, _ := os.ReadDir("uploads")
-		combined := ""
-		for _, f := range files {
-			content, _ := os.ReadFile("uploads/" + f.Name())
-			combined += string(content) + "\n\n"
-		}
-
-		if combined == "" {
-			fmt.Println("No reports found to summarize.")
-			return
-		}
-
-		summary := SummarizeText(combined)
+		content, _ := os.ReadFile(filePath)
+		summary := SummarizeText(string(content))
 		evaluation := EvaluateEmployees()
+		finalReport := fmt.Sprintf("Summary for %s:\n%s\n\n%s", employee, summary, evaluation)
 
-		finalReport := fmt.Sprintf("%s\n\n%s", summary, evaluation)
+		mu.Lock()
+		summaries[employee] = summary
+		grades[employee] = GradePerformance(summary)
+		mu.Unlock()
+
 		SendEmail(finalReport)
-
-		fmt.Println("Email sent successfully with report:\n", finalReport)
+		fmt.Println("Email sent successfully with report for", employee)
 	}()
 
 	c.JSON(http.StatusOK, gin.H{
@@ -70,6 +63,11 @@ func getAllSummaries(c *gin.Context) {
 	mu.Lock()
 	defer mu.Unlock()
 
+	if len(summaries) == 0 {
+		c.JSON(http.StatusOK, gin.H{"message": "No summaries available yet."})
+		return
+	}
+
 	response := gin.H{}
 	for emp, sum := range summaries {
 		response[emp] = gin.H{
@@ -80,6 +78,25 @@ func getAllSummaries(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
+func getEmployeeSummary(c *gin.Context) {
+	employee := c.Param("employee")
+
+	mu.Lock()
+	defer mu.Unlock()
+
+	summary, exists := summaries[employee]
+	if !exists {
+		c.JSON(http.StatusNotFound, gin.H{"error": fmt.Sprintf("No summary found for %s", employee)})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"employee": employee,
+		"summary":  summary,
+		"grade":    grades[employee],
+	})
+}
+
 func main() {
 	_ = godotenv.Load()
 	router := gin.Default()
@@ -88,6 +105,7 @@ func main() {
 
 	router.POST("/upload", uploadHandler)
 	router.GET("/summaries", getAllSummaries)
+	router.GET("/summaries/:employee", getEmployeeSummary)
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	fmt.Println("Server running on http://localhost:8080 (or your ngrok https URL)")
@@ -95,11 +113,15 @@ func main() {
 }
 
 func GradePerformance(summary string) string {
-	if strings.Contains(strings.ToLower(summary), "excellent") {
+	s := strings.ToLower(summary)
+	switch {
+	case strings.Contains(s, "excellent"):
 		return "A"
-	}
-	if strings.Contains(strings.ToLower(summary), "improve") {
+	case strings.Contains(s, "good"):
+		return "B"
+	case strings.Contains(s, "improve"):
 		return "C"
+	default:
+		return "B+"
 	}
-	return "B"
 }
